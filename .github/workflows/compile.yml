@@ -29,6 +29,7 @@ env:
   PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
   TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   TZ: Asia/Shanghai
 
 jobs:
@@ -130,6 +131,17 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
         source $BUILD_PATH/common.sh && Package_amlogic
+        
+    - name: 上传docker镜像
+      continue-on-error: true
+      if: steps.compile.outcome == 'success' && env.UPLOAD_FIRMWARE == 'true'
+      run: |
+        current_time=`date "+%Y-%m-%d"`
+        echo ${{ env.DOCKERHUB_TOKEN }} | xargs docker login -u ippi --password
+        docker import ${{ env.FIRMWARE }}/openwrt-${{ env.TARGET_BOARD }}-${{ env.TARGET_SUBTARGET }}-${{ env.TARGET_PROFILE }}-rootfs.tar.gz ippi/${{ env.TARGET_PROFILE }}-lean-openwrt:$current_time
+        docker push ippi/${{ env.TARGET_PROFILE }}-lean-openwrt:$current_time
+        docker tag ippi/${{ env.TARGET_PROFILE }}-lean-openwrt:$current_time ippi/${{ env.TARGET_PROFILE }}-lean-openwrt:latest
+        docker push ippi/${{ env.TARGET_PROFILE }}-lean-openwrt:latest  
 
     - name: 整理固件文件夹(需配合diy-part.sh设定使用)
       continue-on-error: true
