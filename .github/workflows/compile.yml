@@ -186,7 +186,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.REPO_TOKEN }}
-        file: openwrt/bin/Firmware/*
+        file: ${{ env.FIRMWARE }}/*
         tag: AutoUpdate
         overwrite: true
         file_glob: true
